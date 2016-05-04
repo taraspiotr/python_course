@@ -7,6 +7,16 @@
 # for a in aList:
 #     print a
 
+# geneartion of data
+# aList = []
+# for i in range(10):
+#     aList.append(i**2)
+
+# new way
+# aList = [i**2 for i in range(10)]
+
+
+
 ## slice
 # print aList[:2]
 
