@@ -22,7 +22,7 @@
 '''
 
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+import matplotlib.image
 import matplotlib.colors as colors
 import numpy as np
 
@@ -31,7 +31,7 @@ import matrix
 out = "banner.txt"
 infile ='../../resources/lab1/meil.png'
 
-img = mpimg.imread(infile)
+img = matplotlib.image.imread(infile)
 
 nsize = 20
 
@@ -74,6 +74,11 @@ for i in range(nsize):
             cliped[i, j, 2] = 1
 
 _, (a1, a2, a3) = plt.subplots(1, 3)
+
+print a1
+
+exit()
+
 a1.imshow(nonreduced)
 a2.imshow(colors.hsv_to_rgb(hsvimg))
 a3.imshow(colors.hsv_to_rgb(cliped))
