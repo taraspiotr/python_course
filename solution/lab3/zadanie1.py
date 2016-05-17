@@ -27,7 +27,7 @@ c = a*dt/delta**2
 for t in time:
     print "time:",t
 
-    #Equation:
+    #Equation for new time solution - explicite euler sheme:
     # (Tn - T0)/dt -a*laplacian(T0)=0
     # Tn = T0 + a*dt*laplacian(T0)
     # Tn = T0 + (a*dt/dx**2)*(T0(i,j+1) + T0(i+1,j) - 4*T0(i,j) + T0(i-1,j) + T0(i,j-1) )
