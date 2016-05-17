@@ -26,7 +26,7 @@ import matplotlib.image
 import matplotlib.colors as colors
 import numpy as np
 
-import matrix
+from zadanie3 import reduce
 
 out = "banner.txt"
 infile ='../../resources/lab1/meil.png'
@@ -37,9 +37,9 @@ nsize = 20
 
 nonreduced = np.copy(img)
 
-R = matrix.reduce( img[:, :, 0], (nsize, nsize))
-G = matrix.reduce( img[:, :, 1], (nsize, nsize))
-B = matrix.reduce( img[:, :, 2], (nsize, nsize))
+R = reduce( img[:, :, 0], (nsize, nsize))
+G = reduce( img[:, :, 1], (nsize, nsize))
+B = reduce( img[:, :, 2], (nsize, nsize))
 
 # old fashion
 # img = np.array( [ [ [R[i][j], G[i][j], B[i][j]] for j in range(nsize)] for i in range(nsize)] )
