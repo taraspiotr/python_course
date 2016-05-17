@@ -1,25 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
-from scipy import sparse
-from scipy.sparse.linalg.isolve.iterative import bicgstab
-from scipy.sparse.linalg.isolve.iterative import cg
-
-#Select linear solver by adding new name for function
-#solve = cg #conjugate gradient solver
-solve = bicgstab #bi-conjugate gradient stabilized solver
+from resources.lab3.kdiagonal import d_id
 
 # Setup
-size = (1., 1.)
-N = 100
-a = 0.01
-u = np.array([-0.1, 0.])
-dx = size[0]/(N-1)
-dy = size[1]/(N-1)
+N = 20
+dx = 0.1
+NTimeSteps = 100
+a = 1
+dt = 0.5*(dx**2)/a #<-- stability requirement for time step
 
-NTimeSteps = 200
-
-dt = 1e-1#0.5*(dx**2)/a #<-- stability requirement for time step
 
 #Define boundary nodes
 bcnodes = []
@@ -34,43 +24,39 @@ bcnodesAll.reshape(bcnodesAll.size)
 bvals = [1., 0., 0., 0.]
 
 
-#Build simple equation (the same for each internal node):
-equation = [-dt*a/dy**2, -dt*a/dx**2, 1 + dt*a*(2./dx**2 + 2./dy**2), -dt*a/dy**2, -dt*a/dx**2]
-colShift = np.array([-N, -1, 0, 1, N])
+#Build stiffness matrix:
+K = np.matrix(np.zeros((N**2, N**2)))
 
-# Create matrix in sparse format:
-rowCols = [] #holds indices for non-zero columns in ith row
-rowStarts=[0] #information where starts next row definition, eg. number of columns in i-th row would be rowStarts[i+1] - rowStarts[i]
-data = [] # stores values for each non-zeoro coefficient in rows. Its size is the same as rowCols
-for j in range(N):
-    for i in range(N):
-        nodeId = j*N+i
-        # Equation for node at boundary
-        if nodeId in bcnodesAll:
-            rowCols.append(nodeId)
-            data.append(1)
-        else:
-            # Select those parts of equation which will match matrix size
-            eqparts = [i for i in range(5) if nodeId + colShift[i] >=0 and nodeId + colShift[i] < N*N]
+ # left far diagonal
+K[d_id(K, -N)] = 1
+ # left closer diagonal
+K[d_id(K, -1)] = 1
+ # main diagonal
+K[d_id(K, 0)] = -4
+ # right closer diagonal
+K[d_id(K, 1)] = 1
+ # right far diagonal
+K[d_id(K, N)] = 1
 
-            rowCols += [ nodeId + colShift[i] for i in eqparts ]
-            data += [ equation[i] for i in eqparts ]
+#Build mass matrix
+M = np.matrix(np.zeros_like(K))
+np.fill_diagonal(M, 1)
 
-        rowStarts.append(len(rowCols))
+EqMatrix = M - a*dt/(dx **2)*K
 
-#Create sparse matrix - CSR - Compressed Sparse Row Matrix
-EqMat = sparse.csr_matrix((data, rowCols, rowStarts))
 
-# Create and fill Rhs vector - vector holding dirichelet bc values and initital conditions
-Rhs = np.zeros(N*N)
+#Apply boundary conditions to matrix:
+EqMatrix[bcnodesAll,:] = 0
+EqMatrix[bcnodesAll, bcnodesAll] = 1
 
-#Set inital conditions for all nodes
-Rhs[:] = 1.
 
-#Set BC conditions values to Rhs vector
-for bid, bcn in enumerate(bcnodes):
-    Rhs[bcn] = bvals[bid]
+# Fill rhs vector
+ #Fill with initial conditions
+Rhs = np.matrix(np.zeros((N**2, 1)))
 
+ #apply values from boundary conditions
+for bcn, val in zip(bcnodes, bvals):
+    Rhs[bcn] = val
 
 
 # Time loop
@@ -78,35 +64,28 @@ Results = list()
 Results.append(np.array(Rhs.reshape((N, N))))
 for iter in range(NTimeSteps):
     print 'time iteration:',iter
-    sol = solve(EqMat, Rhs)
-
-    if sol[1] != 0:
-        print "solution is not converged"
-
-    T = np.array(sol[0])
+    T = np.array(np.linalg.solve(EqMatrix, Rhs))
     # do not need to applay boundary conditions to Rhs, because
     # solution in T for boundary nodes is the same throughout the time.
     Rhs = T
     T = T.reshape((N, N))
     Results.append(T)
 
-
 # Animate results:
  # Setup data for plotting
 X, Y = np.meshgrid(np.linspace(0, 1, N), np.linspace(0, 1, N))
 fig = plt.figure()
 plt.axes().set_aspect('equal', 'datalim')
-cs = plt.contourf(X, Y, Results[0], levels=np.linspace(0, 1, 11))
+cs = plt.contourf(X, Y, Results[0], 10)
 fig.colorbar(cs, ticks=np.linspace(0, 1, 11))
 
-
 def animate(i):
-    cs=plt.contourf(X, Y, Results[i], levels=np.linspace(0, 1, 11))
+    cs=plt.contourf(X, Y, Results[i], 10)
     plt.title('Time %lf' % ((i+1)*dt))
     return cs
 
-
 anim = animation.FuncAnimation(fig, animate, frames=NTimeSteps, interval=5, repeat=False)
+#anim = animation.FuncAnimation(fig, lambda i: plt.contourf(X, Y, Results[i], 10), frames=NTimeSteps, interval=5, repeat=False)
 
 
 plt.show()
