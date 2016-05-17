@@ -36,12 +36,12 @@ def zadanie2(list1, list2):
         newList.append(l)
         newList.append(r)
 
-    for e in big:
+    for e in big[smallSize:]:
         newList.append(e)
 
     return newList
 
-test(zadanie2, [1, 2, 19, 'dd', ':P', ":("], [12,'c','5'], [1, 12, 2, 'c', 19, '5', 1, 2, 19, 'dd', ':P', ':('])
+test(zadanie2, [1, 2, 19, 'dd', ':P', ":("], [12,'c','5'], [1, 12, 2, 'c', 19, '5', 'dd', ':P', ':('])
 
 
 def zadanie3(tupleList):
