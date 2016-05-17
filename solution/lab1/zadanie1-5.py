@@ -21,7 +21,7 @@ def zadanie1(old):
             newList.append(e)
     return newList
 
-test(zadanie1, [1, 2, 3, 3, 5, 68, 68, 24], [1,2,3,5,68,24])
+test(zadanie1, [1, 2, 3, 3, 5, 68, 68, 24], [1, 2, 3, 5, 68, 24])
 
 
 def zadanie2(list1, list2):
@@ -72,7 +72,7 @@ from random import randint
 while True:
     r = randint(1,9)
     try:
-        guess = input("Podaj liczbe od 1-9\n")
+        guess = input("Choose number in 1-9 range\n")
         num = int(guess)
         if not 0 < num < 10:
             print "Chose number in 1-9 range"
