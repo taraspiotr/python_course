@@ -42,7 +42,7 @@ K[bcnodesAll, bcnodesAll] = 1
 
 
 # Fill rhs vector - apply value to lower boundary
-Rhs = np.matrix(np.zeros((N**2, 1)))
+Rhs = np.zeros(N**2)
 
  #apply values from boundary conditions
 for bcn, val in zip(bcnodes, bvals):

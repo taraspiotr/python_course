@@ -48,11 +48,11 @@ def animate_contour_plot(framesDatas, sizeX=(0,1), sizeY=(0,1), dataRange=None, 
 
 
 #TEST
-import numpy as np
-X, Y = np.meshgrid(np.linspace(0,1,100), np.linspace(0,1,100))
-
-Z = []
-for t in np.linspace(0, 2*np.pi, 50):
-    Z.append( np.exp(2*X*Y)*np.sin(t) )
-
-animate_contour_plot(Z, dataRange=(-10.,10.))
+# import numpy as np
+# X, Y = np.meshgrid(np.linspace(0,1,100), np.linspace(0,1,100))
+#
+# Z = []
+# for t in np.linspace(0, 2*np.pi, 50):
+#     Z.append( np.exp(2*X*Y)*np.sin(t) )
+#
+# animate_contour_plot(Z, dataRange=(-10.,10.))
