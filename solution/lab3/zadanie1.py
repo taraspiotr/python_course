@@ -1,62 +1,58 @@
+
+def animate_contour_plot(framesDatas, sizeX=(0,1), sizeY=(0,1), dataRange=None, nLevels=10, skip=1, repeat=False ):
+    """
+    Function which make animation from set of 2D data on cartesian grid
+    :param framesDatas: List of 2D numpy.arrays containing nodal values
+    :param sizeX: tuple holding domain range in X dir
+    :param sizeY: tuple holding domain range in Y dir
+    :param skip: number of frames to be skipped
+    :param nLevels: number of color levels
+    :param dataRange: tuple holding min and max value for data range to be displayed in plot and colorbar
+    :return: None
+    """
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from matplotlib import animation
+
+    if len(framesDatas)==0:
+        raise Exception("Data frames number should be at least one")
+
+
+    Nx,Ny = framesDatas[0].shape
+
+    X, Y = np.meshgrid(np.linspace(sizeX[0], sizeX[1], Nx), np.linspace(sizeY[0], sizeY[1], Ny))
+
+    if not dataRange:
+        minD = min(framesDatas[0].flatten())
+        maxD = max(framesDatas[0].flatten())
+    else:
+        minD,maxD = dataRange
+
+    fig = plt.figure()
+    plt.axes().set_aspect('equal', 'datalim')
+    cs = plt.contourf(X, Y, framesDatas[0], nLevels)
+    fig.colorbar(cs, ticks=np.linspace(minD, maxD, nLevels+1))
+
+    if len(framesDatas) > 1:
+        def animate(i):
+            i = i*skip
+            cs=plt.contourf(X, Y, framesDatas[i], nLevels)
+            cs.zmin = minD
+            cs.zmmax = maxD
+            plt.title('Frame %d' % (i+1))
+            return cs
+
+        anim = animation.FuncAnimation(fig, animate, frames=len(framesDatas)/skip , interval=5, repeat=repeat)
+
+    plt.show()
+
+
+#TEST
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import animation
+X, Y = np.meshgrid(np.linspace(0,1,100), np.linspace(0,1,100))
 
+Z = []
+for t in np.linspace(0, 2*np.pi, 50):
+    Z.append( np.exp(2*X*Y)*np.sin(t) )
 
-N = 50
-delta = 1./(N-1)
-a = 1.
-dt = 0.1*(delta**2)/a #<-- time restriction for explicite scheme
-
-
-T = np.zeros((N,N),dtype=float)
-
-#Set bottom nodes to be equal 1
-T[0,:] = 1
-
-Results = []
-time = np.linspace(0, 1, int(1./dt + 1))
-
-
-forward = range(2,N)
-backward = range(0,N-2)
-
-c = a*dt/delta**2
-
-#time loop
-for t in time:
-    print "time:",t
-
-    #Equation for new time solution - explicite euler sheme:
-    # (Tn - T0)/dt -a*laplacian(T0)=0
-    # Tn = T0 + a*dt*laplacian(T0)
-    # Tn = T0 + (a*dt/dx**2)*(T0(i,j+1) + T0(i+1,j) - 4*T0(i,j) + T0(i-1,j) + T0(i,j-1) )
-
-    #Loop form
-    # for j in range(1, N-1):
-    #     for i in range(1,N-1):
-    #         T[i,j] += c * ( T[i,j+1] + T[i+1,j] - 4*T[i,j] + T[i-1,j] + T[i,j-1])
-
-    #Vecotrized code
-    T[1:-1,1:-1] = T[1:-1,1:-1] + c*(T[1:-1,forward] + T[forward,1:-1] - 4*T[1:-1,1:-1] + T[backward,1:-1] + T[1:-1,backward])
-
-    Results.append(np.copy(T))
-
-
-# Animate results:
- # Setup data for plotting
-X, Y = np.meshgrid(np.linspace(0, 1, N), np.linspace(0, 1, N))
-fig = plt.figure()
-plt.axes().set_aspect('equal', 'datalim')
-cs = plt.contourf(X, Y, Results[0], 10)
-fig.colorbar(cs, ticks=np.linspace(0, 1, 11))
-
-def animate(i):
-    i = i*time.size/100
-    cs=plt.contourf(X, Y, Results[i], 10)
-    plt.title('Time %lf' % ((i+1)*dt))
-    return cs
-
-anim = animation.FuncAnimation(fig, animate, frames=100 , interval=5, repeat=False)
-
-plt.show()
+animate_contour_plot(Z, dataRange=(-10.,10.))

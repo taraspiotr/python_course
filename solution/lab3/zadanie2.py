@@ -1,60 +1,45 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from numpy.linalg import solve
-
-from resources.lab3.kdiagonal import d_id
+from zadanie1 import animate_contour_plot
 
 N = 50
-
-#Define boundary nodes
-bcnodes = []
-bcnodes.append(range(N)) #bottom nodes
-bcnodes.append([i*N for i in range(N)]) #left nodes
-bcnodes.append([(i+1)*N-1 for i in range(N)]) #right nodes
-bcnodes.append([(N-1)*N + i for i in range(N)]) #top nodes
-bcnodesAll = np.array(bcnodes)
-bcnodesAll.reshape(bcnodesAll.size)
-
-#Define dirichlet bounadry conditions values on each boundary
-bvals = [1., 0., 0., 0.]
+delta = 1./(N-1)
+a = 1.
+dt = 0.1*(delta**2)/a #<-- time restriction for explicite scheme
 
 
-#Build stiffness matrix:
-K = np.matrix(np.zeros((N**2, N**2)))
+T = np.zeros((N,N),dtype=float)
 
- # left far diagonal
-K[d_id(K, -N)] = 1
- # left closer diagonal
-K[d_id(K, -1)] = 1
- # main diagonal
-K[d_id(K, 0)] = -4
- # right closer diagonal
-K[d_id(K, 1)] = 1
- # right far diagonal
-K[d_id(K, N)] = 1
+#Set bottom nodes to be equal 1
+T[0,:] = 1
+
+Results = []
+time = np.linspace(0, 1, int(1./dt + 1))
 
 
-#Apply boundary conditions to matrix:
-K[bcnodesAll,:] = 0
-K[bcnodesAll, bcnodesAll] = 1
+forward = range(2,N)
+backward = range(0,N-2)
+
+c = a*dt/delta**2
+
+#time loop
+for t in time:
+    print "time:",t
+
+    #Equation for new time solution - explicite euler sheme:
+    # (Tn - T0)/dt -a*laplacian(T0)=0
+    # Tn = T0 + a*dt*laplacian(T0)
+    # Tn = T0 + (a*dt/dx**2)*(T0(i,j+1) + T0(i+1,j) - 4*T0(i,j) + T0(i-1,j) + T0(i,j-1) )
+
+    #Loop form
+    # for j in range(1, N-1):
+    #     for i in range(1,N-1):
+    #         T[i,j] += c * ( T[i,j+1] + T[i+1,j] - 4*T[i,j] + T[i-1,j] + T[i,j-1])
+
+    #Vecotrized code
+    T[1:-1,1:-1] = T[1:-1,1:-1] + c*(T[1:-1,forward] + T[forward,1:-1] - 4*T[1:-1,1:-1] + T[backward,1:-1] + T[1:-1,backward])
+
+    Results.append(np.copy(T))
 
 
-# Fill rhs vector - apply value to lower boundary
-Rhs = np.matrix(np.zeros((N**2, 1)))
-
- #apply values from boundary conditions
-for bcn, val in zip(bcnodes, bvals):
-    Rhs[bcn] = val
-
-
-# Solve equation
-T = np.array( solve(K, Rhs) )
-
-# Plot result
-X, Y = np.meshgrid(np.linspace(0, 1, N), np.linspace(0, 1, N))
-T = T.reshape((N, N))
-fig = plt.figure()
-CS = plt.contourf(X, Y, T, 10)
-fig.colorbar(CS, ticks=np.linspace(0, 1, 11))
-plt.axes().set_aspect('equal', 'datalim')
-plt.show()
+# Animate results:
+animate_contour_plot(Results, skip=100)
