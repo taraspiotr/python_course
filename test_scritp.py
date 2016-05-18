@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-array = [1, 3, 5, 7, 9]
+array =  range()
+print array
 
 numpyArray = np.array(array)
 
