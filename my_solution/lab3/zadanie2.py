@@ -1,70 +1,58 @@
 import numpy as np
-from scipy.integrate import odeint
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
+from zadanie1 import animate_contour_plot
+
+N = 50 #liczba wezlow w kierunku x i y
+delta = 1./(N-1) #wielkosc oczka siatki
+a = 1. #dyfuzyjnosc
+dt = 0.1*(delta**2)/a # krok czasowy
+endTime = 1.
+
+# Tablica do przechowywania rozwiazan (2D, kazdy wezel to element)
+T = np.ones((N,N),dtype=float)
+
+# Ustaw wartosci rozwiazan dla wezlow na dolenej krawedzi na 1 - warunek brzegowy
+#twoj kod ...
+
+T[:,0] = 0
 
 
-g = np.array([0, -0.581])
-k = 1
-l = 1
-m1, m2 = 1, 1
+# Lista do przechowyania wynikow z kolejnych krokow czasowych
+Results = []
 
-def norm(x):
-    temp = np.sqrt(x[1]*x[1] + x[0]*x[0])
-    return temp
+# Utworz tablice zawierajca czasy kolejnych krokow czasowych
+time = np.linspace(0, endTime, int(endTime/dt + 1))
 
-def funkcja_prawych_stron(y, t0):
-    dy = np.zeros(8)
-    w1 = y[[0,1]]
-    w2 = y[[4,5]]
+T0 = np.copy(T)
+#time loop
+c = (a*dt/delta**2)
+for t in time:
 
-    F = k*(norm(w2-w1) - l)*(w2-w1)/norm(w2-w1)
-    # print F
-    # print type(w1), type(F)
-
-    dy[[0, 1]] = y[[2, 3]]
-    dy[[2, 3]] = F/m1 + g
-    dy[[4, 5]] = y[[6, 7]]
-    dy[[6, 7]] = -F/m2 + g
-
-    return dy
+    print "calculating time :",t
 
 
+    # (T - T0)/dt -a*laplacian(T0)=0
+    # T = T0 + a*dt*laplacian(T0)
+    # T = T0 + (a*dt/dx**2)*(T0(i,j+1) + T0(i+1,j) - 4*T0(i,j) + T0(i-1,j) + T0(i,j-1) )
+    # Pamietaj, ze na brzegach jest zadany waruenek typu Dirichleta, zatem w tych wezlach
+    # wartosci nie powinny sie zmieniac
+
+    # Twoj kod ....
+
+    # for j in range(1,N-1):
+    #     for i in range(1,N-1):
+    #         T[i][j] = T0[i][j] + (a*dt/delta**2)*(T0[i][j+1] + T0[i+1][j] - 4*T0[i][j] + T0[i-1][j] + T0[i][j-1])
+
+    backward = range(0,N-2)
+    forward = range(2,N)
+
+    T[1:-1,1:-1] = T0[1:-1,1:-1] + c*(T0[backward,1:-1] + T0[1:-1,backward] - 4*T0[1:-1,1:-1] + T0[1:-1,forward] + T0[forward,1:-1])
+
+    T0 = np.copy(T)
+    Results.append(T0)
 
 
+# Animate results:
+# Wywolaj funkcje z zadania 1, tak aby wyswietlic animacje rozkladu temperatury
 
 
-t = np.linspace(0,15, 501)
-y0 = np.array([0, 0, 0, 5, -1, 0, -3, 3])
-
-
-Y  = odeint(funkcja_prawych_stron, y0, t)
-x1 = Y[:, 0]
-y1 = Y[:, 1]
-x2 = Y[:, 4]
-y2 = Y[:, 5]
-
-fig = plt.figure()
-
-line1,  = plt.plot(x1, np.zeros_like(x1), "b.", markersize = 20)
-line2,  = plt.plot(x2, np.zeros_like(x2), "g.", markersize = 20)
-line3,  = plt.plot(x2, np.zeros_like(x2), "r-", linewidth = 3)
-
-plt.plot(x1,y1, color="blue")
-plt.plot(x2, y2, color="green")
-
-plt.xlim([-25, 1])
-plt.ylim([-1==0, 20])
-
-def update_plot(frame):
-    line1.set_xdata(x1[frame])
-    line1.set_ydata(y1[frame])
-    line2.set_xdata(x2[frame])
-    line2.set_ydata(y2[frame])
-
-    line3.set_xdata(np.array([x1[frame], x2[frame]]))
-    line3.set_ydata(np.array([y1[frame], y2[frame]]))
-
-anim = FuncAnimation(fig, update_plot, frames=500, interval=1, repeat=False)
-
-plt.show()
+animate_contour_plot(Results, skip=20, nLevels= 20)

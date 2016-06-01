@@ -20,7 +20,7 @@ def przeszukiwanie(currentDir, iletab):
                 plik.write("  ")
             plik.write(currentEntry + "\n")
 
-plik = open("./lab3/plik.txt", "w")
+plik = open("./lab2/plik.txt", "w")
 przeszukiwanie("/home/piotr/Documents", 0)
 plik.close()
 

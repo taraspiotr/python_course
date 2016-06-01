@@ -1,65 +1,120 @@
-import os
-
-sciezka = os.path.join("/home", 'piotr', "PycharmProjects", "python_course",
-                       "resources", "lab2", "klaudia.png")
-
-import matplotlib.pyplot as plt
-import matplotlib.image as img
 import numpy as np
-from zadanie3 import reduce
 
-image = img.imread(sciezka)
+from zadanie1 import animate_contour_plot
+from resources.lab3.kdiagonal import d_id
+import time
+start_time = time.time()
 
-(msize, nsize) = (100, 100)
-
-nonreduced = np.copy(image)
-
-R = reduce(image[:, :, 0], (msize, nsize))
-G = reduce(image[:, :, 1], (msize, nsize))
-B = reduce(image[:, :, 2], (msize, nsize))
-
-# old fashion
-# img = np.array( [ [ [R[i][j], G[i][j], B[i][j]] for j in range(nsize)] for i in range(nsize)] )
-# or
-image2 = np.zeros((msize, nsize, 3))
-image2[:, :, 0] = R
-image2[:, :, 1] = G
-image2[:, :, 2] = B
-
-# plt.subplot(3, 1, 1)
-imgplot = plt.imshow(image)
-# plt.subplot(3, 1, 2)
-imgplot = plt.imshow(image2)
-
-import matplotlib.colors
-
-imer = matplotlib.colors.rgb_to_hsv(image2)
-imer[:, :, 1] = 0
-
-# plt.subplot(3, 1, 2)
-imgplot = plt.imshow(matplotlib.colors.hsv_to_rgb(imer))
+# Setup
+N = 20
+dx = 1./(N-1)
+NTimeSteps = 1000
+a = 1.
+dt = 0.05
 
 
-dark = np.zeros((nsize, nsize), dtype=bool)
-light = np.copy(dark)
+# Definicja numerow wezlow brzegowych w pelnym wektorze rozwiazan T o wymiarze N*N
+bcnodes = []
+    #dolne wezly
+bcnodes.append(range(N))
+    #wezly na lewo
+bcnodes.append([i*N for i in range(N)])
+    #wezly na prawo
+# twoj kod ...
+bcnodes.append([(i*N + N - 1) for i in range(N)])
+    #wezly na scianie gornej
+# twoj kod ...
+bcnodes.append(range(N*(N-1), N*N))
 
-for i in range(msize):
-        for j in range(nsize):
-                if imer[i, j, 2] < 0.3:
-                        dark[i, j] = True
-                        imer[i, j, 2] = 0.3
-                elif imer[i, j][2] < 0.8:
-                        light[i, j] = True
-                        imer[i, j, 2] = 0.8
+# Zbierz wszystkie wezly w jeden wektor ( wykorzystaj funkcje reshape)
+#bcnodesAll = ... twoj kod ...
+bcnodesAll = np.reshape(bcnodes, 4*N)
 
-plt.subplot(1, 1, 1)
-imgplot = plt.imshow(matplotlib.colors.hsv_to_rgb(imer))
-plt.show()
 
-with open("obrazek.txt", 'w') as f:
-        for d, l in zip(dark, light):
-                line = np.array(["  "] * nsize)
-                line[d] = "//"
-                line[l] = "/ "
-                f.write("".join(line))
-                f.write("\n")
+#Zdefiniuj wartosci rozwiazania dla kazdego z 4 brzegow
+# bvals = ....
+bvals = np.zeros(4*N)
+for i in range(N):
+        bvals[i] = 1
+
+
+#Zbuduj uklad rownan uzupelniajac elementy macierzy K
+K = np.zeros((N**2, N**2))
+
+ # Diagonala odnoszaca sie do wezlow T[i,j-1]
+# twoj kod ....
+for i in range(N, N**2):
+        K[i][i-N] = 1
+ # Diagonala odnoszaca sie do wezlow T[i-1,j]
+# twoj kod ....
+for i in range(1, N**2):
+        K[i-1][i] = 1
+ # Glowna diagonala, wezlu T[i,j]
+# twoj kod ....
+for i in range(N**2):
+        K[i][i] = -4
+ # Diagonala odnoszaca sie do wezlow T[i+1,j]
+# twoj kod ....
+for i in range(N**2-1):
+        K[i+1][i] = 1
+ # Diagonala odnoszaca sie do wezlow T[i,j+1]
+# twoj kod ....
+for i in range(N**2-N):
+        K[i][i+N] = 1
+
+
+#Build mass matrix
+M = np.zeros_like(K)
+print M.shape
+for i in range(N**2):
+    M[i][i] = 1
+
+# Utworz uklad rownan
+# EqMatrix = ....
+EqMatrix = M - dt*a*K
+
+
+# Zmodyfikuj rownania w macierzy tak, aby jawnie wprowadzic rozwiazania dla wezlow brzegowych (odwolaj sie do
+# indeksow za pomoca tablicy bcnodesAll)
+# ... twoj kod ...
+for i in bcnodesAll:
+        EqMatrix[i] = 0
+        EqMatrix[i][i] = 1
+
+
+# Utworz wektor prawych stron rownania
+Rhs = np.zeros(N**2)
+
+# Zadaj warunki brzegowe i poczatkowe w wektorze prawych stron (skorzystaj z tablic bvals i bcnodes)
+# Twoj kod ....
+for i in range(4*N):
+        Rhs[bcnodesAll[i]] = bvals[i]
+
+
+#Tworzymy zbior rozwiazan
+Results = list()
+
+#Dodajemy pierwsze rozwiazanie
+Results.append(np.array(Rhs.reshape((N, N))))
+
+# Petla czasowa
+for iter in range(NTimeSteps):
+    print 'time iteration:',iter+1
+
+    #T = ... rozwiaz rownanie
+    T = np.linalg.solve(EqMatrix, Rhs)
+
+    # Zaktualizuj wektor prawych stron
+    #Rhs = ....
+    Rhs = T
+
+    #Zapisz rozwiazania w liscie, na skonwertuj wyniki z wektora na tablice 2D 
+    # T = ... twoj kod ..
+    T = np.reshape(T, (N, N))
+    Results.append(T)
+print("\n--- %s seconds ---" % (time.time() - start_time))
+
+
+
+# Wyswietl wyniki:
+animate_contour_plot(Results, skip=5, repeat=True)
